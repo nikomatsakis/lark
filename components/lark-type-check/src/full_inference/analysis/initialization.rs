@@ -10,7 +10,11 @@ use datafrog::Iteration;
 use datafrog::Relation;
 use datafrog::RelationLeaper;
 
+/// Contains the results of initialization analysis, along with some
+/// useful intermediate relations that are needed later and hence
+/// there is no reason to reconstruct.
 crate struct Initialization {
+    crate access_by_perm: Relation<(Perm, (Path, Node))>,
     crate error_move_of_imprecise_path: Relation<(Node, ())>,
     crate error_access_to_uninitialized_path: Relation<(Path, Node)>,
 }
