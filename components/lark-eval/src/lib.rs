@@ -1,6 +1,7 @@
 use lark_debug_with::DebugWith;
 use lark_entity::{Entity, EntityData, ItemKind, LangItem, MemberKind};
 use lark_hir as hir;
+use lark_intern::neo::InternKey;
 use lark_intern::{Intern, Untern};
 use lark_parser::{ParserDatabase, ParserDatabaseExt};
 use lark_query_system::LarkDatabase;
@@ -121,7 +122,7 @@ pub fn eval_place(
     let place_data = &fn_body.tables[place];
 
     match place_data {
-        hir::PlaceData::Entity(entity) => match entity.untern(db) {
+        hir::PlaceData::Entity(entity) => match entity.lookup(db) {
             EntityData::LangItem(LangItem::True) => Value::Bool(true),
             EntityData::LangItem(LangItem::False) => Value::Bool(false),
             _ => unimplemented!("EntityData not yet support in eval"),
@@ -245,7 +246,7 @@ pub fn eval_expression(
                 } => match fn_body[function_place] {
                     hir::PlaceData::Entity(entity) => {
                         match db.member_entity(entity, MemberKind::Method, fn_body[method].text) {
-                            Some(entity) => match entity.untern(db) {
+                            Some(entity) => match entity.lookup(db) {
                                 EntityData::ItemName { .. } => eval_fn_call(
                                     db,
                                     fn_body,
@@ -278,7 +279,7 @@ pub fn eval_expression(
                                     MemberKind::Method,
                                     fn_body[method].text,
                                 ) {
-                                    Some(entity) => match entity.untern(db) {
+                                    Some(entity) => match entity.lookup(db) {
                                         EntityData::ItemName { .. } => eval_fn_call(
                                             db,
                                             fn_body,
@@ -334,7 +335,7 @@ pub fn eval_expression(
             hir::ExpressionData::Place {
                 place: function_place,
             } => match fn_body[function_place] {
-                hir::PlaceData::Entity(entity) => match entity.untern(db) {
+                hir::PlaceData::Entity(entity) => match entity.lookup(db) {
                     EntityData::LangItem(LangItem::Debug) => {
                         for argument in arguments.iter(fn_body) {
                             let result = eval_expression(db, fn_body, argument, state, io_handler);
@@ -415,7 +416,7 @@ pub fn eval_expression(
                 if ready_to_execute {
                     let text = value.untern(db);
                     let string = text.to_string();
-                    let string = string[1..string.len()-1].to_string();
+                    let string = string[1..string.len() - 1].to_string();
                     Value::Str(string)
                 } else {
                     Value::Skipped
@@ -497,7 +498,7 @@ pub fn eval(db: &LarkDatabase, io_handler: &mut IOHandler) {
         let entities = db.top_level_entities_in_file(input_file);
 
         for &entity in &*entities {
-            match entity.untern(&db) {
+            match entity.lookup(&db) {
                 EntityData::ItemName {
                     kind: ItemKind::Function,
                     id,

@@ -17,7 +17,8 @@ use lark_error::ErrorReported;
 use lark_error::ErrorSentinel;
 use lark_error::WithError;
 use lark_hir as hir;
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use lark_span::{ByteIndex, FileName, Location, Span, Spanned};
 use lark_string::GlobalIdentifier;
 use std::sync::Arc;
@@ -68,7 +69,7 @@ crate fn child_parsed_entities(
 ) -> WithError<Seq<ParsedEntity>> {
     log::debug!("child_parsed_entities({})", entity.debug_with(db));
 
-    match entity.untern(db) {
+    match entity.lookup(db) {
         EntityData::InputFile { file } => WithError::ok(db.parsed_file(file).into_value().entities),
 
         EntityData::ItemName { .. } => db
@@ -84,7 +85,7 @@ crate fn child_parsed_entities(
 }
 
 crate fn parsed_entity(db: &impl ParserDatabase, entity: Entity) -> ParsedEntity {
-    match entity.untern(db) {
+    match entity.lookup(db) {
         EntityData::InputFile { file } => {
             let parsed_file = db.parsed_file(file).into_value();
             ParsedEntity {
@@ -226,7 +227,7 @@ crate fn members(
         .child_entities(owner)
         .iter()
         .cloned()
-        .filter_map(|child_entity| match child_entity.untern(db) {
+        .filter_map(|child_entity| match child_entity.lookup(db) {
             EntityData::MemberName { id, kind, .. } => Some(hir::Member {
                 name: id,
                 kind,
@@ -282,7 +283,7 @@ crate fn hover_targets(
                 kind: HoverTargetKind::Entity(entity),
             }];
 
-            if entity.untern(db).has_fn_body() {
+            if entity.lookup(db).has_fn_body() {
                 let fn_body = db.fn_body(entity).into_value();
                 targets.extend(fn_body.tables.spans.iter().filter_map(|(&mi, &mi_span)| {
                     if mi_span.contains_index(index) {

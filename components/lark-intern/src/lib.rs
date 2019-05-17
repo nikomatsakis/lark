@@ -2,6 +2,8 @@ use lark_collections::{Equivalent, FxIndexMap, U32Index};
 use parking_lot::{RwLock, RwLockUpgradableReadGuard};
 use std::hash::Hash;
 
+pub mod neo;
+
 /// Generate a "intern tables" struct that can intern one or more
 /// types. Input looks like:
 ///

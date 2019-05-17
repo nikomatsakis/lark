@@ -4,7 +4,8 @@
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
 use lark_error::{ErrorReported, ErrorSentinel};
-use lark_intern::{Intern, Untern};
+use lark_intern::Untern;
+use lark_intern::neo::{Intern, InternData, InternKey, Lookup};
 use lark_span::FileName;
 use lark_string::{GlobalIdentifier, GlobalIdentifierTables};
 use std::path::PathBuf;
@@ -19,9 +20,9 @@ impl Entity {
     /// should be stored.
     pub fn dump_dir(
         &self,
-        db: &(impl AsRef<EntityTables> + AsRef<GlobalIdentifierTables>),
+        db: &(impl Lookup<Entity> + AsRef<GlobalIdentifierTables>),
     ) -> PathBuf {
-        match self.untern(db) {
+        match self.lookup(db) {
             EntityData::Error(err) => {
                 let mut dir = PathBuf::new();
                 dir.push("error");
@@ -93,12 +94,12 @@ impl EntityData {
 
     /// Returns the file in which this entity is located (if
     /// any). This is none for lang items, errors.
-    pub fn file_name(&self, db: &dyn AsRef<EntityTables>) -> Option<FileName> {
+    pub fn file_name(&self, db: &dyn Lookup<Entity>) -> Option<FileName> {
         match self {
             EntityData::InputFile { file } => Some(*file),
             _ => match self.parent() {
                 None => None,
-                Some(base) => base.untern(db).file_name(db),
+                Some(base) => base.lookup(db).file_name(db),
             },
         }
     }
@@ -205,30 +206,24 @@ pub enum MemberKind {
     Method,
 }
 
-lark_intern::intern_tables! {
-    pub struct EntityTables {
-        struct EntityTablesData {
-            item_ids: map(Entity, EntityData),
-        }
-    }
-}
-
 lark_debug_with::debug_fallback_impl!(Entity);
+
+lark_intern::intern_pair!(Entity, EntityData);
 
 impl<Cx> FmtWithSpecialized<Cx> for Entity
 where
-    Cx: AsRef<EntityTables>,
+    Cx: Lookup<Entity>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let data = self.untern(cx);
+        let data = self.lookup(cx);
         data.fmt_with(cx, fmt)
     }
 }
 
 impl Entity {
     /// The input file in which an entity appears (if any).
-    pub fn input_file(self, db: &dyn AsRef<EntityTables>) -> Option<FileName> {
-        match self.untern(db) {
+    pub fn input_file(self, db: &dyn Lookup<Entity>) -> Option<FileName> {
+        match self.lookup(db) {
             EntityData::LangItem(_) => None,
             EntityData::InputFile { file } => Some(file),
             EntityData::ItemName { base, .. } => base.input_file(db),
@@ -243,7 +238,7 @@ impl Entity {
 
 impl<DB> ErrorSentinel<&DB> for Entity
 where
-    DB: AsRef<EntityTables>,
+    DB: Intern<EntityData>
 {
     fn error_sentinel(db: &DB, report: ErrorReported) -> Self {
         EntityData::Error(report).intern(db)

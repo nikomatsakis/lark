@@ -2,7 +2,9 @@ use lark_debug_with::DebugWith;
 use lark_entity::{Entity, EntityData, ItemKind, LangItem, MemberKind};
 use lark_error::{Diagnostic, WithError};
 use lark_hir as hir;
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
+use lark_intern::Untern;
 use lark_parser::{ParserDatabase, ParserDatabaseExt};
 use lark_query_system::LarkDatabase;
 use lark_ty::Ty;
@@ -18,7 +20,7 @@ fn build_variable_name(
 }
 
 fn build_entity_name(db: &LarkDatabase, entity: Entity) -> String {
-    let entity_data = entity.untern(db);
+    let entity_data = entity.lookup(db);
     match entity_data {
         EntityData::LangItem(LangItem::False) => "false".into(),
         EntityData::LangItem(LangItem::True) => "true".into(),
@@ -71,7 +73,7 @@ pub fn build_type(db: &LarkDatabase, ty: &Ty<lark_ty::declaration::Declaration>)
                 } else if entity == void_entity {
                     "()".into()
                 } else {
-                    match entity.untern(db) {
+                    match entity.lookup(db) {
                         EntityData::ItemName {
                             kind: ItemKind::Struct,
                             id,
@@ -101,7 +103,7 @@ pub fn codegen_struct(
     // for Rust output, output the fields first between the curlies
     for member in members.iter() {
         let member_name = member.name.untern(db);
-        let member_entity = member.entity.untern(db);
+        let member_entity = member.entity.lookup(db);
 
         match member_entity {
             EntityData::MemberName {
@@ -123,7 +125,7 @@ pub fn codegen_struct(
     // output the methods in a separate impl
     output.push_str(&format!("impl {} {{\n", name));
     for member in members.iter() {
-        match member.entity.untern(db) {
+        match member.entity.lookup(db) {
             EntityData::MemberName {
                 kind: MemberKind::Method,
                 ..
@@ -213,7 +215,7 @@ pub fn build_expression(
                 hir::ExpressionData::Place {
                     place: function_place,
                 } => match fn_body[function_place] {
-                    hir::PlaceData::Entity(entity) => match entity.untern(db) {
+                    hir::PlaceData::Entity(entity) => match entity.lookup(db) {
                         EntityData::LangItem(LangItem::Debug) => {
                             output.push_str("\"{}\"");
                             first = false;
@@ -387,7 +389,7 @@ pub fn codegen_rust(db: &LarkDatabase) -> WithError<String> {
         let entities = db.top_level_entities_in_file(input_file);
 
         for &entity in &*entities {
-            match entity.untern(&db) {
+            match entity.lookup(&db) {
                 EntityData::ItemName {
                     kind: ItemKind::Function,
                     id,

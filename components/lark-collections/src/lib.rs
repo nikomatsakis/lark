@@ -180,6 +180,16 @@ macro_rules! index_type {
             }
         }
 
+        impl salsa::InternKey for $name {
+            fn from_intern_id(v: salsa::InternId) -> Self {
+                Self::from_u32(v.as_u32())
+            }
+
+            fn as_intern_id(&self) -> salsa::InternId {
+                salsa::InternId::from(self.as_u32())
+            }
+        }
+
         impl From<usize> for $name {
             #[inline]
             fn from(v: usize) -> $name {

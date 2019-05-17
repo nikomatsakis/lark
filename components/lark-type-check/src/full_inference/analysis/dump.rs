@@ -1,8 +1,7 @@
 use crate::full_inference::FullInferenceTables;
 use crate::TypeCheckDatabase;
 use lark_debug_with::DebugWith;
-use lark_entity::Entity;
-use lark_entity::EntityTables;
+use lark_entity::{Entity, EntityData};
 use lark_hir as hir;
 use lark_string::GlobalIdentifierTables;
 use std::fs;
@@ -67,12 +66,9 @@ where
     }
 }
 
-impl<DB> AsRef<EntityTables> for DumpCx<'_, DB>
-where
-    DB: TypeCheckDatabase,
-{
-    fn as_ref(&self) -> &EntityTables {
-        self.db.as_ref()
+lark_intern::interner_delegate! {
+    impl[DB: TypeCheckDatabase] Interner<Entity, EntityData> for DumpCx<'_, DB> {
+        db
     }
 }
 

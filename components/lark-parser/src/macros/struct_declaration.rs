@@ -20,7 +20,7 @@ use lark_error::ErrorReported;
 use lark_error::ErrorSentinel;
 use lark_error::WithError;
 use lark_hir as hir;
-use lark_intern::Intern;
+use lark_intern::neo::InternData;
 use lark_span::FileName;
 use lark_span::Spanned;
 use lark_string::GlobalIdentifier;

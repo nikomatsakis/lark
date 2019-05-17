@@ -1,6 +1,7 @@
 use language_reporting as l_r;
 use lark_actor::{Actor, LspResponse, QueryRequest};
-use lark_entity::EntityTables;
+use lark_entity::Entity;
+use lark_entity::EntityData;
 use lark_intern::{Intern, Untern};
 use lark_parser::{ParserDatabase, ParserDatabaseExt};
 use lark_pretty_print::PrettyPrintDatabase;
@@ -15,14 +16,23 @@ use url::Url;
 pub mod ls_ops;
 use self::ls_ops::{Cancelled, LsDatabase};
 
-#[salsa::database(lark_parser::ParserStorage, lark_type_check::TypeCheckStorage)]
+#[salsa::database(
+    lark_parser::ParserStorage,
+    lark_type_check::TypeCheckStorage,
+    InternStorage
+)]
 pub struct LarkDatabase {
     runtime: salsa::Runtime<LarkDatabase>,
-    item_id_tables: Arc<EntityTables>,
     global_id_tables: Arc<GlobalIdentifierTables>,
     declaration_tables: Arc<lark_ty::declaration::DeclarationTables>,
     base_inferred_tables: Arc<lark_ty::base_inferred::BaseInferredTables>,
     full_inferred_tables: Arc<lark_ty::full_inferred::FullInferredTables>,
+}
+
+#[salsa::query_group(InternStorage)]
+pub trait InternDatabase {
+    #[salsa::interned]
+    fn intern_entity(&self, key: EntityData) -> Entity;
 }
 
 impl std::fmt::Debug for LarkDatabase {
@@ -47,7 +57,6 @@ impl Default for LarkDatabase {
     fn default() -> Self {
         let mut db = LarkDatabase {
             runtime: Default::default(),
-            item_id_tables: Default::default(),
             global_id_tables: Default::default(),
             declaration_tables: Default::default(),
             base_inferred_tables: Default::default(),
@@ -68,7 +77,6 @@ impl ParallelDatabase for LarkDatabase {
     fn snapshot(&self) -> Snapshot<Self> {
         Snapshot::new(LarkDatabase {
             runtime: self.runtime.snapshot(self),
-            item_id_tables: self.item_id_tables.clone(),
             global_id_tables: self.global_id_tables.clone(),
             declaration_tables: self.declaration_tables.clone(),
             base_inferred_tables: self.base_inferred_tables.clone(),
@@ -81,9 +89,15 @@ impl PrettyPrintDatabase for LarkDatabase {}
 
 impl LsDatabase for LarkDatabase {}
 
-impl AsRef<EntityTables> for LarkDatabase {
-    fn as_ref(&self) -> &EntityTables {
-        &self.item_id_tables
+lark_intern::interner_define! {
+    impl[] Interner<Entity, EntityData> for LarkDatabase {
+        fn intern(&self, data: EntityData) -> Entity {
+            self.intern_entity(data)
+        }
+
+        fn lookup(&self, key: Entity) -> EntityData {
+            self.lookup_intern_entity(key)
+        }
     }
 }
 

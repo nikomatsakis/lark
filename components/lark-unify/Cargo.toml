@@ -12,3 +12,4 @@ repository = "https://github.com/lark-exploration/lark/tree/master/components/la
 [dependencies]
 lark-collections = { path = "../lark-collections", version = "0.1.0" }
 lark-debug-with = { path = "../lark-debug-with", version = "0.1.0" }
+salsa = "0.12.0"

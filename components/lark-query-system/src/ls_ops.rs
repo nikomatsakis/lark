@@ -7,6 +7,8 @@
 use languageserver_types::{Position, Range};
 use lark_entity::{Entity, EntityData, ItemKind, MemberKind};
 use lark_error::Diagnostic;
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use lark_intern::{Intern, Untern};
 use lark_parser::HoverTargetKind;
 use lark_pretty_print::PrettyPrint;
@@ -81,7 +83,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
     ) -> Cancelable<()> {
         self.check_for_cancellation()?;
 
-        match entity.untern(self) {
+        match entity.lookup(self) {
             EntityData::InputFile { .. } => {}
             EntityData::LangItem(_) => {}
             EntityData::Error(_) => {}
@@ -143,7 +145,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
 
             let file_entity = EntityData::InputFile { file: input_file }.intern(self);
             for &entity in self.descendant_entities(file_entity).iter() {
-                if entity.untern(self).has_fn_body() {
+                if entity.lookup(self).has_fn_body() {
                     let fn_body = self.fn_body(entity).into_value();
                     for (key, value) in fn_body.tables.places.iter_enumerated() {
                         if *value == p {
@@ -190,7 +192,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
 
             let file_entity = EntityData::InputFile { file: input_file }.intern(self);
             for &entity in self.descendant_entities(file_entity).iter() {
-                if entity.untern(self).has_fn_body() {
+                if entity.lookup(self).has_fn_body() {
                     let fn_body = self.fn_body(entity).into_value();
                     let possible_match_types = &self.full_type_check(entity).into_value();
 
@@ -267,7 +269,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
             .iter()
             .rev()
             .filter_map(|target| match target.kind {
-                HoverTargetKind::Entity(hovered_entity) => match hovered_entity.untern(self) {
+                HoverTargetKind::Entity(hovered_entity) => match hovered_entity.lookup(self) {
                     EntityData::MemberName {
                         kind: MemberKind::Field,
                         ..
@@ -326,7 +328,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
         entity: Entity,
         use_minimal_span: bool,
     ) -> Option<Span<FileName>> {
-        match entity.untern(self) {
+        match entity.lookup(self) {
             EntityData::Error(..) | EntityData::LangItem { .. } => None,
             _ => {
                 if use_minimal_span {
@@ -452,7 +454,7 @@ pub trait LsDatabase: lark_type_check::TypeCheckDatabase + salsa::Database {
             .iter()
             .rev()
             .filter_map(|target| match target.kind {
-                HoverTargetKind::Entity(entity) => match entity.untern(self) {
+                HoverTargetKind::Entity(entity) => match entity.lookup(self) {
                     EntityData::InputFile { .. }
                     | EntityData::LangItem(_)
                     | EntityData::Error(_) => None,

@@ -3,8 +3,8 @@ use lark_debug_with::DebugWith;
 use lark_entity::Entity;
 use lark_entity::EntityData;
 use lark_hir as hir;
-use lark_intern::Intern;
-use lark_intern::Untern;
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use lark_parser::ParserDatabase;
 use lark_query_system::LarkDatabase;
 use lark_span::FileName;
@@ -25,7 +25,7 @@ impl EntityTree {
 
     fn from_entity(db: &impl ParserDatabase, entity: Entity) -> Self {
         EntityTree {
-            name: entity.untern(db).relative_name(db),
+            name: entity.lookup(db).relative_name(db),
             children: db
                 .child_entities(entity)
                 .iter()

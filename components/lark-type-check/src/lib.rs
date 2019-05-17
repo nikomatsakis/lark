@@ -8,7 +8,8 @@
 use generational_arena::Arena;
 use lark_collections::{FxIndexMap, IndexVec};
 use lark_debug_derive::DebugWith;
-use lark_entity::{Entity, EntityTables};
+use lark_entity::Entity;
+use lark_entity::EntityData;
 use lark_error::{Diagnostic, WithError};
 use lark_hir as hir;
 use lark_parser::ParserDatabase;
@@ -219,12 +220,9 @@ where
     }
 }
 
-impl<F, S> AsRef<EntityTables> for TypeChecker<'_, F, S>
-where
-    F: TypeCheckerFamily,
-{
-    fn as_ref(&self) -> &EntityTables {
-        self.db.as_ref()
+lark_intern::interner_delegate! {
+    impl[F: TypeCheckerFamily, S] Interner<Entity, EntityData> for TypeChecker<'_, F, S> {
+        db
     }
 }
 

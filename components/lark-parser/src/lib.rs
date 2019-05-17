@@ -12,13 +12,13 @@ use lark_collections::{FxIndexMap, Seq};
 use lark_debug_derive::DebugWith;
 use lark_entity::Entity;
 use lark_entity::EntityData;
-use lark_entity::EntityTables;
 use lark_entity::MemberKind;
 use lark_error::Diagnostic;
 use lark_error::ErrorReported;
 use lark_error::WithError;
 use lark_hir as hir;
 use lark_intern::Intern;
+use lark_intern::neo::{Interner, InternData};
 use lark_span::ByteIndex;
 use lark_span::FileName;
 use lark_span::IntoFileName;
@@ -47,7 +47,7 @@ pub use self::ir::ParsedFile;
 
 #[salsa::query_group(ParserStorage)]
 pub trait ParserDatabase:
-    AsRef<GlobalIdentifierTables> + AsRef<EntityTables> + AsRef<DeclarationTables>
+    AsRef<GlobalIdentifierTables> + Interner<Entity, EntityData> + AsRef<DeclarationTables>
 {
     #[salsa::input]
     fn file_names(&self) -> Seq<FileName>;

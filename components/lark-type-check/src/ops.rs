@@ -9,7 +9,7 @@ use lark_entity::EntityData;
 use lark_entity::LangItem;
 use lark_error::{Diagnostic, ErrorReported};
 use lark_hir as hir;
-use lark_intern::Intern;
+use lark_intern::neo::InternData;
 use lark_ty::BaseData;
 use lark_ty::BaseKind;
 use lark_ty::GenericDeclarations;

@@ -2,7 +2,9 @@ use crate::ParserDatabase;
 use lark_debug_with::DebugWith;
 use lark_entity::{Entity, EntityData, LangItem};
 use lark_error::{ErrorReported, ErrorSentinel, WithError};
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
+use lark_intern::Intern;
 use lark_ty as ty;
 use lark_ty::declaration::Declaration;
 use lark_ty::declaration::DeclarationTables;
@@ -13,7 +15,7 @@ crate fn generic_declarations(
     db: &impl ParserDatabase,
     entity: Entity,
 ) -> WithError<Result<Arc<ty::GenericDeclarations>, ErrorReported>> {
-    match entity.untern(db) {
+    match entity.lookup(db) {
         EntityData::Error(report) => WithError::error_sentinel(db, report),
 
         EntityData::LangItem(LangItem::Boolean)
@@ -40,13 +42,13 @@ crate fn generic_declarations(
 
         EntityData::InputFile { .. } => panic!(
             "cannot get generics of entity with data {:?}",
-            entity.untern(db).debug_with(db),
+            entity.lookup(db).debug_with(db),
         ),
     }
 }
 
 crate fn ty(db: &impl ParserDatabase, entity: Entity) -> WithError<ty::Ty<Declaration>> {
-    match entity.untern(db) {
+    match entity.lookup(db) {
         EntityData::Error(report) => WithError::error_sentinel(db, report),
 
         EntityData::LangItem(LangItem::Boolean)
@@ -91,7 +93,7 @@ crate fn ty(db: &impl ParserDatabase, entity: Entity) -> WithError<ty::Ty<Declar
 
         EntityData::InputFile { .. } => panic!(
             "cannot get type of entity with data {:?}",
-            entity.untern(db).debug_with(db),
+            entity.lookup(db).debug_with(db),
         ),
     }
 }
@@ -100,7 +102,7 @@ crate fn signature(
     db: &impl ParserDatabase,
     entity: Entity,
 ) -> WithError<Result<ty::Signature<Declaration>, ErrorReported>> {
-    match entity.untern(db) {
+    match entity.lookup(db) {
         EntityData::Error(report) => WithError::error_sentinel(db, report),
 
         EntityData::LangItem(LangItem::Boolean)
@@ -111,7 +113,7 @@ crate fn signature(
         | EntityData::LangItem(LangItem::Tuple(_))
         | EntityData::LangItem(LangItem::Debug)
         | EntityData::LangItem(LangItem::True) => {
-            panic!("cannot invoke `signature` of `{:?}`", entity.untern(db))
+            panic!("cannot invoke `signature` of `{:?}`", entity.lookup(db))
         }
 
         EntityData::ItemName { .. } | EntityData::MemberName { .. } => {

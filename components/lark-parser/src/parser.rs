@@ -5,11 +5,13 @@ use crate::syntax::Syntax;
 
 use lark_collections::{FxIndexMap, Seq};
 use lark_debug_with::DebugWith;
-use lark_entity::EntityTables;
 use lark_error::{Diagnostic, ErrorReported, WithError};
 use lark_span::{FileName, Span, Spanned};
 use lark_string::{GlobalIdentifier, GlobalIdentifierTables, Text};
+use lark_intern::neo::Interner;
 use std::sync::Arc;
+use lark_entity::Entity;
+use lark_entity::EntityData;
 
 pub struct Parser<'parse> {
     /// The source file name for the file being parsed; used in error reporting
@@ -19,7 +21,7 @@ pub struct Parser<'parse> {
     global_identifier_tables: &'parse GlobalIdentifierTables,
 
     /// Tables for interning entities; extracted from the database.
-    entity_tables: &'parse EntityTables,
+    entity_tables: &'parse dyn Interner<Entity, EntityData>,
 
     /// Set of macro definitions in scope.
     entity_macro_definitions: &'parse FxIndexMap<GlobalIdentifier, Arc<dyn EntityMacroDefinition>>,
@@ -48,7 +50,7 @@ pub struct Parser<'parse> {
 impl Parser<'parse> {
     crate fn new(
         file_name: FileName,
-        db: &'parse (impl AsRef<GlobalIdentifierTables> + AsRef<EntityTables> + ?Sized),
+        db: &'parse (impl AsRef<GlobalIdentifierTables> + Interner<Entity, EntityData> + ?Sized),
         entity_macro_definitions: &'parse FxIndexMap<
             GlobalIdentifier,
             Arc<dyn EntityMacroDefinition>,
@@ -66,7 +68,7 @@ impl Parser<'parse> {
         Parser {
             file_name,
             global_identifier_tables: db.as_ref(),
-            entity_tables: db.as_ref(),
+            entity_tables: Interner::as_dyn(db),
             entity_macro_definitions,
             input,
             tokens,
@@ -305,10 +307,8 @@ impl AsRef<GlobalIdentifierTables> for Parser<'_> {
     }
 }
 
-impl AsRef<EntityTables> for Parser<'_> {
-    fn as_ref(&self) -> &EntityTables {
-        self.entity_tables
-    }
+lark_intern::interner_delegate! {
+    impl[] Interner<Entity, EntityData> for Parser<'_> { entity_tables }
 }
 
 fn advance_next_token(

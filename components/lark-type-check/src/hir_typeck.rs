@@ -10,7 +10,7 @@ use lark_entity::{Entity, EntityData, ItemKind, LangItem, MemberKind};
 use lark_error::ErrorReported;
 use lark_error::ErrorSentinel;
 use lark_hir as hir;
-use lark_intern::Untern;
+use lark_intern::neo::InternKey;
 use lark_pretty_print::PrettyPrint;
 use lark_ty::declaration::Declaration;
 use lark_ty::Signature;
@@ -213,7 +213,7 @@ where
             hir::PlaceData::Variable(var) => self.request_variable_ty(var),
 
             hir::PlaceData::Entity(entity) => {
-                if !entity.untern(self).is_value() {
+                if !entity.lookup(self).is_value() {
                     self.record_error("cannot access as a value", place);
                     return self.error_type();
                 }
@@ -288,7 +288,7 @@ where
         let BaseData { kind, generics } = base_data;
         match kind {
             BaseKind::Named(entity) => {
-                match entity.untern(self) {
+                match entity.lookup(self) {
                     EntityData::ItemName {
                         kind: ItemKind::Function,
                         ..
@@ -470,7 +470,7 @@ where
     ) -> Ty<F> {
         let generics = self.record_entity_and_get_generics(expression, entity);
 
-        match entity.untern(self) {
+        match entity.lookup(self) {
             EntityData::ItemName {
                 kind: ItemKind::Struct,
                 ..
@@ -635,7 +635,7 @@ where
                 (BaseKind::Named(entity), BaseKind::Named(right_entity))
                     if entity == right_entity =>
                 {
-                    match entity.untern(self) {
+                    match entity.lookup(self) {
                         EntityData::LangItem(LangItem::Int) => int_type,
                         EntityData::LangItem(LangItem::Uint) => uint_type,
                         EntityData::Error(_) => self.error_type(),
@@ -715,7 +715,7 @@ where
     ) -> Ty<F> {
         match operator {
             hir::UnaryOperator::Not => match &value_base_data.kind {
-                BaseKind::Named(entity) => match entity.untern(self) {
+                BaseKind::Named(entity) => match entity.lookup(self) {
                     EntityData::LangItem(LangItem::Boolean) => self.boolean_type(),
 
                     EntityData::Error(_) => self.error_type(),

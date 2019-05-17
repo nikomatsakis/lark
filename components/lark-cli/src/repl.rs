@@ -3,6 +3,7 @@ use lark_debug_with::DebugWith;
 use lark_entity::{EntityData, ItemKind};
 use lark_eval::Value;
 use lark_hir as hir;
+use lark_intern::neo::InternKey;
 use lark_intern::{Intern, Untern};
 use lark_parser::{ParserDatabase, ParserDatabaseExt};
 use lark_query_system::ls_ops::LsDatabase;
@@ -21,7 +22,7 @@ pub fn get_body(db: &LarkDatabase) -> lark_error::WithError<std::sync::Arc<lark_
     let entities = db.top_level_entities_in_file(repl_filename);
 
     for &entity in &*entities {
-        match entity.untern(&db) {
+        match entity.lookup(&db) {
             EntityData::ItemName {
                 kind: ItemKind::Function,
                 id,

@@ -2,8 +2,9 @@ use crate::ParserDatabase;
 use lark_entity::Entity;
 use lark_entity::EntityData;
 use lark_entity::LangItem;
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use lark_intern::Intern;
-use lark_intern::Untern;
 use lark_string::GlobalIdentifier;
 
 crate fn resolve_name(
@@ -11,12 +12,12 @@ crate fn resolve_name(
     scope: Entity,
     name: GlobalIdentifier,
 ) -> Option<Entity> {
-    match scope.untern(db) {
+    match scope.lookup(db) {
         EntityData::InputFile { .. } => {
             db.child_entities(scope)
                 .iter()
                 .cloned()
-                .filter(|entity| match entity.untern(db) {
+                .filter(|entity| match entity.lookup(db) {
                     EntityData::ItemName { id, .. } | EntityData::MemberName { id, .. } => {
                         id == name
                     }

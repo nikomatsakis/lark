@@ -22,7 +22,7 @@ use lark_error::ErrorReported;
 use lark_error::ResultExt;
 use lark_error::WithError;
 use lark_hir as hir;
-use lark_intern::Untern;
+use lark_intern::neo::InternKey;
 use lark_span::FileName;
 use lark_span::Spanned;
 use lark_string::GlobalIdentifier;
@@ -113,7 +113,7 @@ impl ParsedFunctionSignature {
                         end_token,
                     },
             }) => {
-                let file_name = entity.untern(&db).file_name(&db).unwrap();
+                let file_name = entity.lookup(&db).file_name(&db).unwrap();
                 let input = db.file_text(file_name);
                 let tokens = db
                     .file_tokens(file_name)

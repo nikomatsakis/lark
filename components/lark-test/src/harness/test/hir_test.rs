@@ -1,13 +1,13 @@
 use crate::harness::options::HirMode;
 use crate::harness::test::TestContext;
 use lark_debug_with::DebugWith;
+use lark_entity::Entity;
 use lark_entity::EntityData;
-use lark_entity::EntityTables;
 use lark_entity::ItemKind;
 use lark_entity::MemberKind;
 use lark_hir as hir;
-use lark_intern::Intern;
-use lark_intern::Untern;
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use lark_parser::ParserDatabase;
 use lark_query_system::LarkDatabase;
 use lark_string::GlobalIdentifierTables;
@@ -36,7 +36,7 @@ impl TestContext<'_> {
         for &input_file in &*input_files {
             let file_entity = EntityData::InputFile { file: input_file }.intern(&self.db);
             for &entity in self.db.descendant_entities(file_entity).iter() {
-                let has_hir = match entity.untern(&self.db) {
+                let has_hir = match entity.lookup(&self.db) {
                     EntityData::ItemName {
                         kind: ItemKind::Function,
                         ..
@@ -102,12 +102,9 @@ where
     }
 }
 
-impl<F> AsRef<EntityTables> for BaseInfo<'_, F>
-where
-    F: TypeFamily,
-{
-    fn as_ref(&self) -> &EntityTables {
-        self.db.as_ref()
+lark_intern::interner_delegate! {
+    impl[F: TypeFamily] Interner<Entity, EntityData> for BaseInfo<'_, F> {
+        db
     }
 }
 

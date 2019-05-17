@@ -19,8 +19,8 @@ use lark_error::ErrorSentinel;
 use lark_error::ResultExt;
 use lark_error::WithError;
 use lark_hir as hir;
+use lark_intern::neo::InternKey;
 use lark_intern::Intern;
-use lark_intern::Untern;
 use lark_span::FileName;
 use lark_span::Spanned;
 use lark_string::GlobalIdentifier;
@@ -146,7 +146,7 @@ impl LazyParsedEntity for ParsedMethod {
         entity: Entity,
         db: &dyn ParserDatabase,
     ) -> WithError<Result<ty::Signature<Declaration>, ErrorReported>> {
-        let parent_entity = entity.untern(&db).parent().unwrap();
+        let parent_entity = entity.lookup(&db).parent().unwrap();
         let parent_ty = db.ty(parent_entity).into_value();
         self.signature.parse_signature(entity, db, Some(parent_ty))
     }

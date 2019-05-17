@@ -1,4 +1,5 @@
 use lark_entity::{Entity, EntityData, ItemKind, LangItem, MemberKind};
+use lark_intern::neo::InternKey;
 use lark_intern::Untern;
 use lark_parser::ParserDatabase;
 use lark_ty::declaration::{Declaration, DeclaredPermKind};
@@ -48,7 +49,7 @@ impl<T: TypeFamily> PrettyPrint for BaseData<T> {
 
 impl PrettyPrint for Entity {
     fn pretty_print(&self, db: &(impl PrettyPrintDatabase + ?Sized)) -> String {
-        match self.untern(&db) {
+        match self.lookup(&db) {
             EntityData::LangItem(LangItem::Boolean) => "bool".into(),
             EntityData::LangItem(LangItem::Uint) => "uint".into(),
             EntityData::LangItem(LangItem::Int) => "int".into(),
