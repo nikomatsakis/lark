@@ -220,9 +220,9 @@ where
     }
 }
 
-lark_intern::interner_delegate! {
+lark_intern::interner_define! {
     impl[F: TypeCheckerFamily, S] Interner<Entity, EntityData> for TypeChecker<'_, F, S> {
-        db
+        delegate(db)
     }
 }
 

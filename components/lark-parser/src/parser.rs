@@ -5,13 +5,13 @@ use crate::syntax::Syntax;
 
 use lark_collections::{FxIndexMap, Seq};
 use lark_debug_with::DebugWith;
-use lark_error::{Diagnostic, ErrorReported, WithError};
-use lark_span::{FileName, Span, Spanned};
-use lark_string::{GlobalIdentifier, GlobalIdentifierTables, Text};
-use lark_intern::neo::Interner;
-use std::sync::Arc;
 use lark_entity::Entity;
 use lark_entity::EntityData;
+use lark_error::{Diagnostic, ErrorReported, WithError};
+use lark_intern::neo::Interner;
+use lark_span::{FileName, Span, Spanned};
+use lark_string::{GlobalIdentifier, GlobalIdentifierTables, Text};
+use std::sync::Arc;
 
 pub struct Parser<'parse> {
     /// The source file name for the file being parsed; used in error reporting
@@ -307,8 +307,8 @@ impl AsRef<GlobalIdentifierTables> for Parser<'_> {
     }
 }
 
-lark_intern::interner_delegate! {
-    impl[] Interner<Entity, EntityData> for Parser<'_> { entity_tables }
+lark_intern::interner_define! {
+    impl[] Interner<Entity, EntityData> for Parser<'_> { delegate(entity_tables) }
 }
 
 fn advance_next_token(

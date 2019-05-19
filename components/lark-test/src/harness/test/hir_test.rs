@@ -102,9 +102,9 @@ where
     }
 }
 
-lark_intern::interner_delegate! {
+lark_intern::interner_define! {
     impl[F: TypeFamily] Interner<Entity, EntityData> for BaseInfo<'_, F> {
-        db
+        delegate(db)
     }
 }
 

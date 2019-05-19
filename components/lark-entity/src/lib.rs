@@ -4,8 +4,8 @@
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
 use lark_error::{ErrorReported, ErrorSentinel};
+use lark_intern::neo::{InternData, InternKey, Interner};
 use lark_intern::Untern;
-use lark_intern::neo::{Intern, InternData, InternKey, Lookup};
 use lark_span::FileName;
 use lark_string::{GlobalIdentifier, GlobalIdentifierTables};
 use std::path::PathBuf;
@@ -20,7 +20,7 @@ impl Entity {
     /// should be stored.
     pub fn dump_dir(
         &self,
-        db: &(impl Lookup<Entity> + AsRef<GlobalIdentifierTables>),
+        db: &(impl Interner<Entity, EntityData> + AsRef<GlobalIdentifierTables>),
     ) -> PathBuf {
         match self.lookup(db) {
             EntityData::Error(err) => {
@@ -94,7 +94,7 @@ impl EntityData {
 
     /// Returns the file in which this entity is located (if
     /// any). This is none for lang items, errors.
-    pub fn file_name(&self, db: &dyn Lookup<Entity>) -> Option<FileName> {
+    pub fn file_name(&self, db: &dyn Interner<Entity, EntityData>) -> Option<FileName> {
         match self {
             EntityData::InputFile { file } => Some(*file),
             _ => match self.parent() {
@@ -212,7 +212,7 @@ lark_intern::intern_pair!(Entity, EntityData);
 
 impl<Cx> FmtWithSpecialized<Cx> for Entity
 where
-    Cx: Lookup<Entity>,
+    Cx: Interner<Entity, EntityData>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let data = self.lookup(cx);
@@ -222,7 +222,7 @@ where
 
 impl Entity {
     /// The input file in which an entity appears (if any).
-    pub fn input_file(self, db: &dyn Lookup<Entity>) -> Option<FileName> {
+    pub fn input_file(self, db: &dyn Interner<Entity, EntityData>) -> Option<FileName> {
         match self.lookup(db) {
             EntityData::LangItem(_) => None,
             EntityData::InputFile { file } => Some(file),
@@ -238,7 +238,7 @@ impl Entity {
 
 impl<DB> ErrorSentinel<&DB> for Entity
 where
-    DB: Intern<EntityData>
+    DB: Interner<Entity, EntityData>,
 {
     fn error_sentinel(db: &DB, report: ErrorReported) -> Self {
         EntityData::Error(report).intern(db)

@@ -66,9 +66,9 @@ where
     }
 }
 
-lark_intern::interner_delegate! {
+lark_intern::interner_define! {
     impl[DB: TypeCheckDatabase] Interner<Entity, EntityData> for DumpCx<'_, DB> {
-        db
+        delegate(db)
     }
 }
 
