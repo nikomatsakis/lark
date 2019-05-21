@@ -28,16 +28,19 @@ impl TypeFamily for FullInferred {
 
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: impl TypeInterners<Self>) -> PermKind {
+    fn own_perm(_tables: &impl TypeInterners<Self>) -> PermKind {
         PermKind::Own
     }
 
-    fn known_repr(_tables: impl TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: &impl TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
-    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
-        base_data.intern(&tables)
+    fn intern_base_data(
+        tables: &impl TypeInterners<Self>,
+        base_data: BaseData<Self>,
+    ) -> Self::Base {
+        base_data.intern(tables)
     }
 }
 

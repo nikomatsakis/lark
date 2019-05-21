@@ -34,17 +34,18 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
 
     type Placeholder: Copy + Clone + Debug + DebugWith + Eq + Hash;
 
-    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base;
+    fn intern_base_data(tables: &impl TypeInterners<Self>, base_data: BaseData<Self>)
+        -> Self::Base;
 
-    fn own_perm(tables: impl TypeInterners<Self>) -> Self::Perm;
+    fn own_perm(tables: &impl TypeInterners<Self>) -> Self::Perm;
 
-    fn direct_repr(tables: impl TypeInterners<Self>) -> Self::Repr {
+    fn direct_repr(tables: &impl TypeInterners<Self>) -> Self::Repr {
         Self::known_repr(tables, ReprKind::Direct)
     }
 
-    fn known_repr(tables: impl TypeInterners<Self>, repr_kind: ReprKind) -> Self::Repr;
+    fn known_repr(tables: &impl TypeInterners<Self>, repr_kind: ReprKind) -> Self::Repr;
 
-    fn error_type(tables: impl TypeInterners<Self>) -> Ty<Self> {
+    fn error_type(tables: &impl TypeInterners<Self>) -> Ty<Self> {
         Ty {
             repr: Self::direct_repr(tables),
             perm: Self::own_perm(tables),
@@ -52,7 +53,7 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
         }
     }
 
-    fn error_base_data(tables: impl TypeInterners<Self>) -> Self::Base {
+    fn error_base_data(tables: &impl TypeInterners<Self>) -> Self::Base {
         Self::intern_base_data(
             tables,
             BaseData {
@@ -64,18 +65,14 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
 }
 
 pub trait TypeInterners<F: TypeFamily>:
-    Copy
-    + Interner<F::Repr, F::ReprData>
-    + Interner<F::Perm, F::PermData>
-    + Interner<F::Base, F::BaseData>
+    Interner<F::Repr, F::ReprData> + Interner<F::Perm, F::PermData> + Interner<F::Base, F::BaseData>
 {
 }
 
 impl<F, T> TypeInterners<F> for T
 where
     F: TypeFamily,
-    T: Copy
-        + Interner<F::Repr, F::ReprData>
+    T: Interner<F::Repr, F::ReprData>
         + Interner<F::Perm, F::PermData>
         + Interner<F::Base, F::BaseData>,
 {
@@ -89,12 +86,12 @@ pub struct Ty<F: TypeFamily> {
     pub base: F::Base,
 }
 
-impl<DB, F> ErrorSentinel<DB> for Ty<F>
+impl<DB, F> ErrorSentinel<&DB> for Ty<F>
 where
     F: TypeFamily,
     DB: TypeInterners<F>,
 {
-    fn error_sentinel(db: DB, _report: ErrorReported) -> Self {
+    fn error_sentinel(db: &DB, _report: ErrorReported) -> Self {
         F::error_type(db)
     }
 }
@@ -330,7 +327,7 @@ pub struct Signature<F: TypeFamily> {
 }
 
 impl<F: TypeFamily> Signature<F> {
-    pub fn error_sentinel(tables: impl TypeInterners<F>, num_inputs: usize) -> Signature<F> {
+    pub fn error_sentinel(tables: &impl TypeInterners<F>, num_inputs: usize) -> Signature<F> {
         Signature {
             inputs: (0..num_inputs).map(|_| F::error_type(tables)).collect(),
             output: F::error_type(tables),

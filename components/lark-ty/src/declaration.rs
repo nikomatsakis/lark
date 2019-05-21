@@ -26,16 +26,19 @@ impl TypeFamily for Declaration {
     type BaseData = BoundVarOr<BaseData<Declaration>>;
     type Placeholder = !;
 
-    fn own_perm(tables: impl TypeInterners<Self>) -> Self::Perm {
-        DeclaredPermKind::Own.intern(&tables)
+    fn own_perm(tables: &impl TypeInterners<Self>) -> Self::Perm {
+        DeclaredPermKind::Own.intern(tables)
     }
 
-    fn known_repr(_tables: impl TypeInterners<Self>, repr_kind: ReprKind) -> ReprKind {
+    fn known_repr(_tables: &impl TypeInterners<Self>, repr_kind: ReprKind) -> ReprKind {
         repr_kind
     }
 
-    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
-        BoundVarOr::Known(base_data).intern(&tables)
+    fn intern_base_data(
+        tables: &impl TypeInterners<Self>,
+        base_data: BaseData<Self>,
+    ) -> Self::Base {
+        BoundVarOr::Known(base_data).intern(tables)
     }
 }
 

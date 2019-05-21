@@ -27,19 +27,19 @@ impl TypeFamily for BaseInferred {
 
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: impl TypeInterners<BaseInferred>) -> Erased {
+    fn own_perm(_tables: &impl TypeInterners<BaseInferred>) -> Erased {
         Erased
     }
 
-    fn known_repr(_tables: impl TypeInterners<BaseInferred>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: &impl TypeInterners<BaseInferred>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
     fn intern_base_data(
-        tables: impl TypeInterners<BaseInferred>,
+        tables: &impl TypeInterners<BaseInferred>,
         base_data: BaseData<Self>,
     ) -> Self::Base {
-        base_data.intern(&tables)
+        base_data.intern(tables)
     }
 }
 
