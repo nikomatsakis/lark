@@ -7,34 +7,39 @@ use crate::Erased;
 use crate::Placeholder;
 use crate::ReprKind;
 use crate::TypeFamily;
+use crate::TypeInterners;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
 pub struct BaseInferred;
 
 impl TypeFamily for BaseInferred {
-    type InternTables = BaseInferredTables;
     type Repr = Erased;
+    type ReprData = Erased;
     type Perm = Erased;
+    type PermData = Erased;
     type Base = Base;
+    type BaseData = BaseData<BaseInferred>;
+
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: &dyn AsRef<BaseInferredTables>) -> Erased {
+    fn own_perm(_tables: impl TypeInterners<BaseInferred>) -> Erased {
         Erased
     }
 
-    fn known_repr(_tables: &dyn AsRef<BaseInferredTables>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: impl TypeInterners<BaseInferred>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
     fn intern_base_data(
-        tables: &dyn AsRef<BaseInferredTables>,
+        tables: impl TypeInterners<BaseInferred>,
         base_data: BaseData<Self>,
     ) -> Self::Base {
-        base_data.intern(tables)
+        base_data.intern(&tables)
     }
 }
 
@@ -46,17 +51,11 @@ lark_debug_with::debug_fallback_impl!(Base);
 
 impl<Cx> FmtWithSpecialized<Cx> for Base
 where
-    Cx: AsRef<BaseInferredTables>,
+    Cx: TypeInterners<BaseInferred>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.untern(cx).fmt_with(cx, fmt)
+        self.lookup(cx).fmt_with(cx, fmt)
     }
 }
 
-lark_intern::intern_tables! {
-    pub struct BaseInferredTables {
-        struct BaseInferredTablesData {
-            base_inferred_base: map(Base, BaseData<BaseInferred>),
-        }
-    }
-}
+lark_intern::intern_pair!(Base, BaseData<BaseInferred>);

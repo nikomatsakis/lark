@@ -1,6 +1,7 @@
 use crate::map_family::FamilyMapper;
 use crate::Ty;
 use crate::TypeFamily;
+use crate::TypeInterners;
 use derive_new::new;
 
 #[derive(new)]
@@ -10,7 +11,7 @@ pub struct Identity<'me, DB> {
 
 impl<DB, F> FamilyMapper<F, F> for Identity<'_, DB>
 where
-    DB: AsRef<F::InternTables>,
+    DB: TypeInterners<F>,
     F: TypeFamily,
 {
     fn map_ty(&mut self, ty: Ty<F>) -> Ty<F> {

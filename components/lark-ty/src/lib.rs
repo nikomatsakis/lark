@@ -10,6 +10,7 @@ use lark_debug_with::DebugWith;
 use lark_entity::Entity;
 use lark_error::ErrorReported;
 use lark_error::ErrorSentinel;
+use lark_intern::neo::Interner;
 use lark_string::GlobalIdentifier;
 use lark_unify::InferVar;
 use std::fmt::{self, Debug};
@@ -24,28 +25,26 @@ pub mod identity;
 pub mod map_family;
 
 pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
-    type InternTables: AsRef<Self::InternTables>;
-
     type Repr: Copy + Clone + Debug + DebugWith + Eq + Hash;
+    type ReprData;
     type Perm: Copy + Clone + Debug + DebugWith + Eq + Hash;
+    type PermData;
     type Base: Copy + Clone + Debug + DebugWith + Eq + Hash;
+    type BaseData;
 
     type Placeholder: Copy + Clone + Debug + DebugWith + Eq + Hash;
 
-    fn intern_base_data(
-        tables: &dyn AsRef<Self::InternTables>,
-        base_data: BaseData<Self>,
-    ) -> Self::Base;
+    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base;
 
-    fn own_perm(tables: &dyn AsRef<Self::InternTables>) -> Self::Perm;
+    fn own_perm(tables: impl TypeInterners<Self>) -> Self::Perm;
 
-    fn direct_repr(tables: &dyn AsRef<Self::InternTables>) -> Self::Repr {
+    fn direct_repr(tables: impl TypeInterners<Self>) -> Self::Repr {
         Self::known_repr(tables, ReprKind::Direct)
     }
 
-    fn known_repr(tables: &dyn AsRef<Self::InternTables>, repr_kind: ReprKind) -> Self::Repr;
+    fn known_repr(tables: impl TypeInterners<Self>, repr_kind: ReprKind) -> Self::Repr;
 
-    fn error_type(tables: &dyn AsRef<Self::InternTables>) -> Ty<Self> {
+    fn error_type(tables: impl TypeInterners<Self>) -> Ty<Self> {
         Ty {
             repr: Self::direct_repr(tables),
             perm: Self::own_perm(tables),
@@ -53,7 +52,7 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
         }
     }
 
-    fn error_base_data(tables: &dyn AsRef<Self::InternTables>) -> Self::Base {
+    fn error_base_data(tables: impl TypeInterners<Self>) -> Self::Base {
         Self::intern_base_data(
             tables,
             BaseData {
@@ -64,6 +63,24 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
     }
 }
 
+pub trait TypeInterners<F: TypeFamily>:
+    Copy
+    + Interner<F::Repr, F::ReprData>
+    + Interner<F::Perm, F::PermData>
+    + Interner<F::Base, F::BaseData>
+{
+}
+
+impl<F, T> TypeInterners<F> for T
+where
+    F: TypeFamily,
+    T: Copy
+        + Interner<F::Repr, F::ReprData>
+        + Interner<F::Perm, F::PermData>
+        + Interner<F::Base, F::BaseData>,
+{
+}
+
 /// A type is the combination of a *permission* and a *base type*.
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
 pub struct Ty<F: TypeFamily> {
@@ -72,12 +89,12 @@ pub struct Ty<F: TypeFamily> {
     pub base: F::Base,
 }
 
-impl<DB, F> ErrorSentinel<&DB> for Ty<F>
+impl<DB, F> ErrorSentinel<DB> for Ty<F>
 where
-    DB: AsRef<F::InternTables>,
     F: TypeFamily,
+    DB: TypeInterners<F>,
 {
-    fn error_sentinel(db: &DB, _report: ErrorReported) -> Self {
+    fn error_sentinel(db: DB, _report: ErrorReported) -> Self {
         F::error_type(db)
     }
 }
@@ -313,7 +330,7 @@ pub struct Signature<F: TypeFamily> {
 }
 
 impl<F: TypeFamily> Signature<F> {
-    pub fn error_sentinel(tables: &dyn AsRef<F::InternTables>, num_inputs: usize) -> Signature<F> {
+    pub fn error_sentinel(tables: impl TypeInterners<F>, num_inputs: usize) -> Signature<F> {
         Signature {
             inputs: (0..num_inputs).map(|_| F::error_type(tables)).collect(),
             output: F::error_type(tables),

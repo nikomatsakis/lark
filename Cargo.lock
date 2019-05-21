@@ -562,6 +562,10 @@ dependencies = [
 ]
 
 [[package]]
+name = "lark-trait-alias"
+version = "0.1.0"
+
+[[package]]
 name = "lark-ty"
 version = "0.1.0"
 dependencies = [
@@ -573,6 +577,7 @@ dependencies = [
  "lark-error 0.1.0",
  "lark-intern 0.1.0",
  "lark-string 0.1.0",
+ "lark-trait-alias 0.1.0",
  "lark-unify 0.1.0",
  "parking_lot 0.7.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "salsa 0.12.0 (registry+https://github.com/rust-lang/crates.io-index)",

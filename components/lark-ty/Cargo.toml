@@ -20,5 +20,6 @@ lark-intern = { path = "../lark-intern", version = "0.1.0" }
 lark-error = { path = "../lark-error", version = "0.1.0" }
 lark-entity = { path = "../lark-entity", version = "0.1.0" }
 lark-string = { path = "../lark-string", version = "0.1.0" }
+lark-trait-alias = { path = "../lark-trait-alias", version = "0.1.0" }
 lark-unify = { path = "../lark-unify", version = "0.1.0" }
 salsa = "0.12.0"

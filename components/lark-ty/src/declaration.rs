@@ -7,41 +7,42 @@ use crate::BoundVar;
 use crate::BoundVarOr;
 use crate::ReprKind;
 use crate::TypeFamily;
+use crate::TypeInterners;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
 pub struct Declaration;
 
 impl TypeFamily for Declaration {
-    type InternTables = DeclarationTables;
     type Repr = ReprKind;
+    type ReprData = ReprKind;
     type Perm = Perm;
+    type PermData = DeclaredPermKind;
     type Base = Base;
+    type BaseData = BoundVarOr<BaseData<Declaration>>;
     type Placeholder = !;
 
-    fn own_perm(tables: &dyn AsRef<DeclarationTables>) -> Self::Perm {
-        DeclaredPermKind::Own.intern(tables)
+    fn own_perm(tables: impl TypeInterners<Self>) -> Self::Perm {
+        DeclaredPermKind::Own.intern(&tables)
     }
 
-    fn known_repr(_tables: &dyn AsRef<DeclarationTables>, repr_kind: ReprKind) -> ReprKind {
+    fn known_repr(_tables: impl TypeInterners<Self>, repr_kind: ReprKind) -> ReprKind {
         repr_kind
     }
 
-    fn intern_base_data(
-        tables: &dyn AsRef<DeclarationTables>,
-        base_data: BaseData<Self>,
-    ) -> Self::Base {
-        BoundVarOr::Known(base_data).intern(tables)
+    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
+        BoundVarOr::Known(base_data).intern(&tables)
     }
 }
 
 impl Declaration {
-    pub fn intern_bound_var(db: &AsRef<DeclarationTables>, bv: BoundVar) -> Base {
+    pub fn intern_bound_var(db: impl TypeInterners<Declaration>, bv: BoundVar) -> Base {
         let bv: BoundVarOr<BaseData<Declaration>> = BoundVarOr::BoundVar(bv);
-        bv.intern(db)
+        bv.intern(&db)
     }
 }
 
@@ -53,10 +54,10 @@ lark_debug_with::debug_fallback_impl!(Base);
 
 impl<Cx> FmtWithSpecialized<Cx> for Base
 where
-    Cx: AsRef<DeclarationTables>,
+    Cx: TypeInterners<Declaration>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.untern(cx).fmt_with(cx, fmt)
+        self.lookup(cx).fmt_with(cx, fmt)
     }
 }
 
@@ -68,10 +69,10 @@ lark_debug_with::debug_fallback_impl!(Perm);
 
 impl<Cx> FmtWithSpecialized<Cx> for Perm
 where
-    Cx: AsRef<DeclarationTables>,
+    Cx: TypeInterners<Declaration>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.untern(cx).fmt_with(cx, fmt)
+        self.lookup(cx).fmt_with(cx, fmt)
     }
 }
 
@@ -81,11 +82,5 @@ pub enum DeclaredPermKind {
     Own,
 }
 
-lark_intern::intern_tables! {
-    pub struct DeclarationTables {
-        struct DeclarationTablesData {
-            bases: map(Base, BoundVarOr<BaseData<Declaration>>),
-            perms: map(Perm, DeclaredPermKind),
-        }
-    }
-}
+lark_intern::intern_pair!(Base, BoundVarOr<BaseData<Declaration>>);
+lark_intern::intern_pair!(Perm, DeclaredPermKind);

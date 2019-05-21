@@ -8,34 +8,36 @@ use crate::PermKind;
 use crate::Placeholder;
 use crate::ReprKind;
 use crate::TypeFamily;
+use crate::TypeInterners;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::{Intern, Untern};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
 pub struct FullInferred;
 
 impl TypeFamily for FullInferred {
-    type InternTables = FullInferredTables;
     type Repr = Erased; // FIXME
+    type ReprData = Erased;
     type Perm = PermKind;
+    type PermData = PermKind;
     type Base = Base;
+    type BaseData = BaseData<FullInferred>;
+
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: &dyn AsRef<FullInferredTables>) -> PermKind {
+    fn own_perm(_tables: impl TypeInterners<Self>) -> PermKind {
         PermKind::Own
     }
 
-    fn known_repr(_tables: &dyn AsRef<FullInferredTables>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: impl TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
-    fn intern_base_data(
-        tables: &dyn AsRef<FullInferredTables>,
-        base_data: BaseData<Self>,
-    ) -> Self::Base {
-        base_data.intern(tables)
+    fn intern_base_data(tables: impl TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
+        base_data.intern(&tables)
     }
 }
 
@@ -47,17 +49,11 @@ lark_debug_with::debug_fallback_impl!(Base);
 
 impl<Cx> FmtWithSpecialized<Cx> for Base
 where
-    Cx: AsRef<FullInferredTables>,
+    Cx: TypeInterners<FullInferred>,
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.untern(cx).fmt_with(cx, fmt)
+        self.lookup(cx).fmt_with(cx, fmt)
     }
 }
 
-lark_intern::intern_tables! {
-    pub struct FullInferredTables {
-        struct FullInferredTablesData {
-            full_inferred_base: map(Base, BaseData<FullInferred>),
-        }
-    }
-}
+lark_intern::intern_pair!(Base, BaseData<FullInferred>);
