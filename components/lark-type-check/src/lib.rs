@@ -15,11 +15,8 @@ use lark_hir as hir;
 use lark_parser::ParserDatabase;
 use lark_pretty_print::PrettyPrintDatabase;
 use lark_ty::base_inferred::BaseInferred;
-use lark_ty::base_inferred::BaseInferredTables;
 use lark_ty::declaration::Declaration;
-use lark_ty::declaration::DeclarationTables;
 use lark_ty::full_inferred::FullInferred;
-use lark_ty::full_inferred::FullInferredTables;
 use lark_ty::map_family::Map;
 use lark_ty::BaseData;
 use lark_ty::Generics;
@@ -41,7 +38,7 @@ mod substitute;
 
 #[salsa::query_group(TypeCheckStorage)]
 pub trait TypeCheckDatabase:
-    ParserDatabase + AsRef<BaseInferredTables> + AsRef<FullInferredTables> + PrettyPrintDatabase
+    ParserDatabase + TypeInterners<BaseInferred> + TypeInterners<FullInferred> + PrettyPrintDatabase
 {
     /// Compute the "base type information" for a given fn body.
     /// This is the type information excluding permissions.
