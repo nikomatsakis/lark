@@ -4,9 +4,7 @@ use lark_intern::Untern;
 use lark_parser::ParserDatabase;
 use lark_ty::declaration::{Declaration, DeclaredPermKind};
 use lark_ty::full_inferred::FullInferred;
-use lark_ty::{
-    BaseData, BaseKind, BoundVarOr, PermKind, Ty, TypeFamily, TypeInterners, TypeLookup,
-};
+use lark_ty::{BaseData, BaseKind, BoundVarOr, PermKind, Ty, TypeFamily, TypeInterners};
 
 pub trait PrettyPrintDatabase: ParserDatabase + TypeInterners<FullInferred> {}
 

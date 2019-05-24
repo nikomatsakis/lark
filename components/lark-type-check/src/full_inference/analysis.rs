@@ -13,7 +13,6 @@ use lark_error::Diagnostic;
 use lark_hir as hir;
 use lark_string::GlobalIdentifier;
 use lark_ty::PermKind;
-use lark_ty::TypeInterners;
 use lark_unify::UnificationTable;
 
 mod builder;
@@ -132,7 +131,7 @@ impl AnalysisIr {
         entity: Entity,
         db: &impl TypeCheckDatabase,
         fn_body: &hir::FnBody,
-        tables: &dyn TypeInterners<FullInference>,
+        tables: &impl AsRef<FullInferenceTables>,
     ) -> AnalysisResults {
         let cx = &DumpCx::new(db, fn_body, tables.as_ref(), entity);
 

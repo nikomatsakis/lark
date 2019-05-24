@@ -15,8 +15,11 @@ use lark_hir as hir;
 use lark_parser::ParserDatabase;
 use lark_pretty_print::PrettyPrintDatabase;
 use lark_ty::base_inferred::BaseInferred;
+use lark_ty::base_inferred::BaseInferredTables;
 use lark_ty::declaration::Declaration;
+use lark_ty::declaration::DeclarationTables;
 use lark_ty::full_inferred::FullInferred;
+use lark_ty::full_inferred::FullInferredTables;
 use lark_ty::map_family::Map;
 use lark_ty::BaseData;
 use lark_ty::Generics;
@@ -97,13 +100,7 @@ enum UniverseBinder {
 /// A trait alias for a type family that has `Placeholder` mapped to
 /// `Placeholder`.  These are the kinds of type families the type
 /// checker can use.
-trait TypeCheckerFamily: TypeFamily<Placeholder = Placeholder> {
-    /// The type we used to store our intern tables. For most type
-    /// families, we never define this, because we will ultimately
-    /// just use the database. But for the 'intermediate types' that
-    /// we use during type checking we create temporary intern tables.
-    type InternTables;
-}
+trait TypeCheckerFamily: TypeFamily<Placeholder = Placeholder> {}
 impl<T: TypeFamily<Placeholder = Placeholder>> TypeCheckerFamily for T {}
 
 /// An "extension trait" for the `TypeChecker` that defines the

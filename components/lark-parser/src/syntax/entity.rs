@@ -249,7 +249,7 @@ impl LazyParsedEntity for ErrorParsedEntity {
         _entity: Entity,
         db: &dyn ParserDatabase,
     ) -> WithError<ty::Ty<Declaration>> {
-        WithError::ok(ErrorSentinel::error_sentinel(&db, self.err))
+        WithError::ok(ErrorSentinel::error_sentinel(db.decl_interners(), self.err))
     }
 
     fn parse_signature(

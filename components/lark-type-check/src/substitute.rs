@@ -1,6 +1,7 @@
 use lark_intern::Untern;
 use lark_ty::declaration;
 use lark_ty::declaration::Declaration;
+use lark_ty::declaration::DeclarationTables;
 use lark_ty::map_family::FamilyMapper;
 use lark_ty::map_family::Map;
 use lark_ty::BoundVar;

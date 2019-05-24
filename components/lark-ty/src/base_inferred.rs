@@ -8,9 +8,10 @@ use crate::Placeholder;
 use crate::ReprKind;
 use crate::TypeFamily;
 use crate::TypeInterners;
-use crate::TypeLookup;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
+use lark_intern::neo::InternData;
+use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
@@ -38,7 +39,7 @@ impl TypeFamily for BaseInferred {
         tables: &dyn TypeInterners<BaseInferred>,
         base_data: BaseData<Self>,
     ) -> Self::Base {
-        tables.intern_base(base_data)
+        base_data.intern(tables.as_base())
     }
 }
 
@@ -57,10 +58,4 @@ where
     }
 }
 
-impl TypeLookup<BaseInferred> for Base {
-    type Data = BaseData<BaseInferred>;
-
-    fn lookup(self, db: &dyn TypeInterners<BaseInferred>) -> Self::Data {
-        db.lookup_base(self)
-    }
-}
+lark_intern::intern_pair!(Base, BaseData<BaseInferred>);

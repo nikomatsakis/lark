@@ -10,6 +10,7 @@ use lark_debug_with::DebugWith;
 use lark_entity::Entity;
 use lark_error::ErrorReported;
 use lark_error::ErrorSentinel;
+use lark_intern::neo::Interner;
 use lark_string::GlobalIdentifier;
 use lark_unify::InferVar;
 use std::fmt::{self, Debug};
@@ -62,54 +63,52 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
     }
 }
 
-pub trait TypeInterners<F: TypeFamily> {
+pub trait TypeInterners<F: TypeFamily>:
+    Interner<F::Repr, F::ReprData> + Interner<F::Perm, F::PermData> + Interner<F::Base, F::BaseData>
+{
     fn as_dyn(&self) -> &dyn TypeInterners<F>;
-    fn intern_repr(&self, repr: F::ReprData) -> F::Repr;
-    fn lookup_repr(&self, repr: F::Repr) -> F::ReprData;
-    fn intern_perm(&self, perm: F::PermData) -> F::Perm;
-    fn lookup_perm(&self, perm: F::Perm) -> F::PermData;
-    fn intern_base(&self, base: F::BaseData) -> F::Base;
-    fn lookup_base(&self, base: F::Base) -> F::BaseData;
 }
 
-impl<F, T> TypeInterners<F> for &T
+impl<F> dyn TypeInterners<F> + '_
 where
     F: TypeFamily,
-    T: ?Sized + TypeInterners<F>,
 {
-    fn as_dyn(&self) -> &dyn TypeInterners<F> {
-        T::as_dyn(self)
+    /// Upcast a `dyn TypeInterners` to the interner table for
+    /// reprs. These really shouldn't be necessary but for
+    /// rust-lang/rust#61083 (ugh).
+    ///
+    /// FIXME(rust-lang/rust#61083)
+    pub fn as_repr(&self) -> &dyn Interner<F::Repr, F::ReprData> {
+        return hack(self);
+
+        fn hack<F: TypeFamily>(
+            this: &(impl TypeInterners<F> + ?Sized),
+        ) -> &dyn Interner<F::Repr, F::ReprData> {
+            Interner::as_dyn(this)
+        }
     }
 
-    fn intern_repr(&self, repr: F::ReprData) -> F::Repr {
-        T::intern_repr(self, repr)
+    // FIXME(rust-lang/rust#61083)
+    pub fn as_perm(&self) -> &dyn Interner<F::Perm, F::PermData> {
+        return hack(self);
+
+        fn hack<F: TypeFamily>(
+            this: &(impl TypeInterners<F> + ?Sized),
+        ) -> &dyn Interner<F::Perm, F::PermData> {
+            Interner::as_dyn(this)
+        }
     }
 
-    fn lookup_repr(&self, repr: F::Repr) -> F::ReprData {
-        T::lookup_repr(self, repr)
+    // FIXME(rust-lang/rust#61083)
+    pub fn as_base(&self) -> &dyn Interner<F::Base, F::BaseData> {
+        return hack(self);
+
+        fn hack<F: TypeFamily>(
+            this: &(impl TypeInterners<F> + ?Sized),
+        ) -> &dyn Interner<F::Base, F::BaseData> {
+            Interner::as_dyn(this)
+        }
     }
-
-    fn intern_perm(&self, perm: F::PermData) -> F::Perm {
-        T::intern_perm(self, perm)
-    }
-
-    fn lookup_perm(&self, perm: F::Perm) -> F::PermData {
-        T::lookup_perm(self, perm)
-    }
-
-    fn intern_base(&self, base: F::BaseData) -> F::Base {
-        T::intern_base(self, base)
-    }
-
-    fn lookup_base(&self, base: F::Base) -> F::BaseData {
-        T::lookup_base(self, base)
-    }
-}
-
-pub trait TypeLookup<F> {
-    type Data;
-
-    fn lookup(self, db: &dyn TypeInterners<F>) -> Self::Data;
 }
 
 /// A type is the combination of a *permission* and a *base type*.
@@ -123,10 +122,10 @@ pub struct Ty<F: TypeFamily> {
 impl<DB, F> ErrorSentinel<&DB> for Ty<F>
 where
     F: TypeFamily,
-    DB: TypeInterners<F>,
+    DB: ?Sized + TypeInterners<F>,
 {
     fn error_sentinel(db: &DB, _report: ErrorReported) -> Self {
-        F::error_type(db)
+        F::error_type(TypeInterners::as_dyn(db))
     }
 }
 

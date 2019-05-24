@@ -29,9 +29,7 @@ use lark_ty::Placeholder;
 use lark_ty::ReprKind;
 use lark_ty::Ty;
 use lark_ty::TypeFamily;
-use lark_ty::TypeInterners;
 use lark_unify::{InferVar, Inferable};
-use std::cell::RefCell;
 
 crate mod query_definition;
 
@@ -42,12 +40,10 @@ mod resolve_to_base_inferred;
 pub struct BaseInference;
 
 impl TypeFamily for BaseInference {
+    type InternTables = BaseInferenceTables;
     type Repr = Erased;
-    type ReprData = Erased;
     type Perm = Erased;
-    type PermData = Erased;
     type Base = Base;
-    type BaseData = InferVarOr<BaseData<BaseInference>>;
     type Placeholder = Placeholder;
 
     fn own_perm(_tables: &dyn AsRef<BaseInferenceTables>) -> Erased {
@@ -104,6 +100,14 @@ where
 {
     fn fmt_with_specialized(&self, cx: &Cx, fmt: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.untern(cx).fmt_with(cx, fmt)
+    }
+}
+
+lark_intern::intern_tables! {
+    pub struct BaseInferenceTables {
+        struct BaseInferenceTablesData {
+            base_inference_base: map(Base, InferVarOr<BaseData<BaseInference>>),
+        }
     }
 }
 
@@ -277,40 +281,5 @@ impl SubstitutionDelegate<BaseInference>
         ty: Ty<BaseInference>,
     ) -> Ty<BaseInference> {
         ty
-    }
-}
-
-#[derive(Default)]
-pub struct BaseInferenceTables {
-    base_table: RefCell<lark_intern::InternTable<Base, InferVarOr<BaseData<BaseInference>>>>,
-}
-
-impl TypeInterners<BaseInference> for BaseInferenceTables {
-    fn as_dyn(&self) -> &dyn TypeInterners<BaseInference> {
-        self
-    }
-
-    fn intern_repr(&self, repr: Erased) -> Erased {
-        repr
-    }
-
-    fn lookup_repr(&self, repr: Erased) -> Erased {
-        repr
-    }
-
-    fn intern_perm(&self, value: Erased) -> Erased {
-        value
-    }
-
-    fn lookup_perm(&self, value: Erased) -> Erased {
-        value
-    }
-
-    fn intern_base(&self, base: InferVarOr<BaseData<BaseInference>>) -> Base {
-        self.base_table.borrow_mut().intern(base)
-    }
-
-    fn lookup_base(&self, base: Base) -> InferVarOr<BaseData<BaseInference>> {
-        self.base_table.borrow().get(base)
     }
 }

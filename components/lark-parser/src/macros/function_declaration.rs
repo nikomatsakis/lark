@@ -103,7 +103,7 @@ impl LazyParsedEntity for ParsedFunctionDeclaration {
             Ok(generic_declarations) => {
                 assert!(generic_declarations.is_empty());
                 let ty = crate::type_conversion::declaration_ty_named(
-                    ty::TypeInterners::as_dyn(db),
+                    db.decl_interners(),
                     entity,
                     ty::declaration::DeclaredPermKind::Own,
                     ty::ReprKind::Direct,
@@ -111,7 +111,7 @@ impl LazyParsedEntity for ParsedFunctionDeclaration {
                 );
                 WithError::ok(ty)
             }
-            Err(err) => WithError::error_sentinel(&db, err),
+            Err(err) => WithError::error_sentinel(db.decl_interners(), err),
         }
     }
 

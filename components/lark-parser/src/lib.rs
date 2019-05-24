@@ -145,6 +145,19 @@ pub trait ParserDatabase:
     fn resolve_name(&self, scope: Entity, name: GlobalIdentifier) -> Option<Entity>;
 }
 
+impl dyn ParserDatabase + '_ {
+    // FIXME(rust-lang/rust#61083)
+    fn decl_interners(&self) -> &dyn TypeInterners<Declaration> {
+        return decl_interners_impl(self);
+
+        fn decl_interners_impl(
+            db: &(impl ParserDatabase + ?Sized),
+        ) -> &dyn TypeInterners<Declaration> {
+            TypeInterners::as_dyn(db)
+        }
+    }
+}
+
 #[derive(Clone, Debug, DebugWith, PartialEq, Eq)]
 pub struct HoverTarget {
     pub span: Span<FileName>,

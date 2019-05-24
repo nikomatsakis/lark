@@ -11,8 +11,6 @@ use lark_ty::PermKind;
 use lark_ty::Placeholder;
 use lark_ty::ReprKind;
 use lark_ty::TypeFamily;
-use lark_ty::TypeInterners;
-use std::cell::RefCell;
 
 crate mod apply_perm;
 
@@ -41,58 +39,33 @@ crate mod type_checker;
 crate struct FullInference;
 
 impl TypeFamily for FullInference {
+    type InternTables = FullInferenceTables;
     type Repr = Erased;
-    type ReprData = Erased;
     type Perm = perm::Perm;
-    type PermData = PermData;
     type Base = Base;
-    type BaseData = InferVarOr<BaseData<FullInference>>;
     type Placeholder = Placeholder;
 
-    fn own_perm(tables: &dyn TypeInterners<Self>) -> Self::Perm {
-        tables.intern_perm(PermData::Known(PermKind::Own))
+    fn own_perm(tables: &dyn AsRef<FullInferenceTables>) -> Self::Perm {
+        PermData::Known(PermKind::Own).intern(tables)
     }
 
-    fn known_repr(_tables: &dyn TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: &dyn AsRef<FullInferenceTables>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
-    fn intern_base_data(tables: &dyn TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
-        tables.intern_base(InferVarOr::Known(base_data))
+    fn intern_base_data(
+        tables: &dyn AsRef<FullInferenceTables>,
+        base_data: BaseData<Self>,
+    ) -> Self::Base {
+        InferVarOr::Known(base_data).intern(tables)
     }
 }
 
-pub struct FullInferenceTables {
-    base_table: RefCell<lark_intern::InternTable<Base, InferVarOr<BaseData<FullInference>>>>,
-    perm_table: RefCell<lark_intern::InternTable<perm::Perm, PermData>>,
-}
-
-impl TypeInterners<FullInference> for FullInferenceTables {
-    fn as_dyn(&self) -> &dyn TypeInterners<FullInference> {
-        self
-    }
-
-    fn intern_repr(&self, repr: Erased) -> Erased {
-        repr
-    }
-
-    fn lookup_repr(&self, repr: Erased) -> Erased {
-        repr
-    }
-
-    fn intern_perm(&self, value: PermData) -> perm::Perm {
-        self.perm_table.borrow_mut().intern(value)
-    }
-
-    fn lookup_perm(&self, value: perm::Perm) -> PermData {
-        self.perm_table.borrow().get(value)
-    }
-
-    fn intern_base(&self, base: InferVarOr<BaseData<FullInference>>) -> Base {
-        self.table.borrow_mut().intern(base)
-    }
-
-    fn lookup_base(&self, base: Base) -> InferVarOr<BaseData<FullInference>> {
-        self.table.borrow().get(base)
+lark_intern::intern_tables! {
+    crate struct FullInferenceTables {
+        struct FullInferenceTablesData {
+            bases: map(Base, InferVarOr<BaseData<FullInference>>),
+            perms: map(Perm, PermData),
+        }
     }
 }

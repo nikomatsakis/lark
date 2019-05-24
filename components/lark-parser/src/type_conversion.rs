@@ -125,7 +125,7 @@ crate fn signature(
 
 crate fn unit_ty(db: &dyn ParserDatabase) -> ty::Ty<Declaration> {
     declaration_ty_named(
-        &db,
+        db.decl_interners(),
         EntityData::LangItem(LangItem::Tuple(0)).intern(&db),
         ty::declaration::DeclaredPermKind::Own,
         ty::ReprKind::Direct,
@@ -143,7 +143,7 @@ crate fn declaration_ty_named(
     let kind = ty::BaseKind::Named(entity);
     let base = Declaration::intern_base_data(db, ty::BaseData { kind, generics });
     ty::Ty {
-        perm: db.intern_perm(perm),
+        perm: perm.intern(db.as_perm()),
         repr,
         base,
     }

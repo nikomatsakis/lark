@@ -52,7 +52,9 @@ impl ParsedTypeReference {
             ParsedTypeReference::Elided(_span) => {
                 WithError::ok(crate::type_conversion::unit_ty(db))
             }
-            ParsedTypeReference::Error => WithError::ok(Declaration::error_type(&db)),
+            ParsedTypeReference::Error => {
+                WithError::ok(Declaration::error_type(db.decl_interners()))
+            }
         }
     }
 }
@@ -84,7 +86,7 @@ impl NamedTypeReference {
                 // post-parse, or else distinct parsing combinators
                 // (the former might be more convenient).
                 let ty = crate::type_conversion::declaration_ty_named(
-                    &db,
+                    db.decl_interners(),
                     entity,
                     ty::declaration::DeclaredPermKind::Own,
                     ty::ReprKind::Direct,
@@ -94,7 +96,7 @@ impl NamedTypeReference {
             }
             None => {
                 let msg = format!("unknown type: `{}`", self.identifier.untern(&db));
-                WithError::report_error(&db, msg, self.identifier.span)
+                WithError::report_error(db.decl_interners(), msg, self.identifier.span)
             }
         }
     }
