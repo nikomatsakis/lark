@@ -8,10 +8,9 @@ use crate::Placeholder;
 use crate::ReprKind;
 use crate::TypeFamily;
 use crate::TypeInterners;
+use crate::TypeLookup;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::neo::InternData;
-use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
@@ -27,19 +26,19 @@ impl TypeFamily for BaseInferred {
 
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: &impl TypeInterners<BaseInferred>) -> Erased {
+    fn own_perm(_tables: &dyn TypeInterners<BaseInferred>) -> Erased {
         Erased
     }
 
-    fn known_repr(_tables: &impl TypeInterners<BaseInferred>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: &dyn TypeInterners<BaseInferred>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
     fn intern_base_data(
-        tables: &impl TypeInterners<BaseInferred>,
+        tables: &dyn TypeInterners<BaseInferred>,
         base_data: BaseData<Self>,
     ) -> Self::Base {
-        base_data.intern(tables)
+        tables.intern_base(base_data)
     }
 }
 
@@ -58,4 +57,10 @@ where
     }
 }
 
-lark_intern::intern_pair!(Base, BaseData<BaseInferred>);
+impl TypeLookup<BaseInferred> for Base {
+    type Data = BaseData<BaseInferred>;
+
+    fn lookup(self, db: &dyn TypeInterners<BaseInferred>) -> Self::Data {
+        db.lookup_base(self)
+    }
+}

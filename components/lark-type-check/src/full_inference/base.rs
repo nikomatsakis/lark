@@ -1,5 +1,5 @@
+use super::FullInferenceTables;
 use crate::full_inference::FullInference;
-use crate::full_inference::FullInferenceTables;
 use lark_debug_with::DebugWith;
 use lark_intern::Intern;
 use lark_intern::Untern;

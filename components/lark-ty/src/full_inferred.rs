@@ -9,10 +9,9 @@ use crate::Placeholder;
 use crate::ReprKind;
 use crate::TypeFamily;
 use crate::TypeInterners;
+use crate::TypeLookup;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::neo::InternData;
-use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
@@ -28,19 +27,16 @@ impl TypeFamily for FullInferred {
 
     type Placeholder = Placeholder;
 
-    fn own_perm(_tables: &impl TypeInterners<Self>) -> PermKind {
+    fn own_perm(_tables: &dyn TypeInterners<Self>) -> PermKind {
         PermKind::Own
     }
 
-    fn known_repr(_tables: &impl TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
+    fn known_repr(_tables: &dyn TypeInterners<Self>, _repr_kind: ReprKind) -> Self::Repr {
         Erased
     }
 
-    fn intern_base_data(
-        tables: &impl TypeInterners<Self>,
-        base_data: BaseData<Self>,
-    ) -> Self::Base {
-        base_data.intern(tables)
+    fn intern_base_data(tables: &dyn TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
+        tables.intern_base(base_data)
     }
 }
 
@@ -59,4 +55,10 @@ where
     }
 }
 
-lark_intern::intern_pair!(Base, BaseData<FullInferred>);
+impl TypeLookup<FullInferred> for Base {
+    type Data = BaseData<FullInferred>;
+
+    fn lookup(self, db: &dyn TypeInterners<FullInferred>) -> Self::Data {
+        db.lookup_base(self)
+    }
+}

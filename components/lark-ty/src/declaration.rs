@@ -8,10 +8,9 @@ use crate::BoundVarOr;
 use crate::ReprKind;
 use crate::TypeFamily;
 use crate::TypeInterners;
+use crate::TypeLookup;
 use lark_debug_derive::DebugWith;
 use lark_debug_with::{DebugWith, FmtWithSpecialized};
-use lark_intern::neo::InternData;
-use lark_intern::neo::InternKey;
 use std::fmt;
 
 #[derive(Copy, Clone, Debug, DebugWith, PartialEq, Eq, Hash)]
@@ -26,26 +25,23 @@ impl TypeFamily for Declaration {
     type BaseData = BoundVarOr<BaseData<Declaration>>;
     type Placeholder = !;
 
-    fn own_perm(tables: &impl TypeInterners<Self>) -> Self::Perm {
-        DeclaredPermKind::Own.intern(tables)
+    fn own_perm(tables: &dyn TypeInterners<Self>) -> Self::Perm {
+        tables.intern_perm(DeclaredPermKind::Own)
     }
 
-    fn known_repr(_tables: &impl TypeInterners<Self>, repr_kind: ReprKind) -> ReprKind {
+    fn known_repr(_tables: &dyn TypeInterners<Self>, repr_kind: ReprKind) -> ReprKind {
         repr_kind
     }
 
-    fn intern_base_data(
-        tables: &impl TypeInterners<Self>,
-        base_data: BaseData<Self>,
-    ) -> Self::Base {
-        BoundVarOr::Known(base_data).intern(tables)
+    fn intern_base_data(tables: &dyn TypeInterners<Self>, base_data: BaseData<Self>) -> Self::Base {
+        tables.intern_base(BoundVarOr::Known(base_data))
     }
 }
 
 impl Declaration {
     pub fn intern_bound_var(db: impl TypeInterners<Declaration>, bv: BoundVar) -> Base {
         let bv: BoundVarOr<BaseData<Declaration>> = BoundVarOr::BoundVar(bv);
-        bv.intern(&db)
+        db.intern_base(bv)
     }
 }
 
@@ -85,5 +81,18 @@ pub enum DeclaredPermKind {
     Own,
 }
 
-lark_intern::intern_pair!(Base, BoundVarOr<BaseData<Declaration>>);
-lark_intern::intern_pair!(Perm, DeclaredPermKind);
+impl TypeLookup<Declaration> for Base {
+    type Data = BoundVarOr<BaseData<Declaration>>;
+
+    fn lookup(self, db: &dyn TypeInterners<Declaration>) -> Self::Data {
+        db.lookup_base(self)
+    }
+}
+
+impl TypeLookup<Declaration> for Perm {
+    type Data = DeclaredPermKind;
+
+    fn lookup(self, db: &dyn TypeInterners<Declaration>) -> Self::Data {
+        db.lookup_perm(self)
+    }
+}

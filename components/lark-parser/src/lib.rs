@@ -17,8 +17,8 @@ use lark_error::Diagnostic;
 use lark_error::ErrorReported;
 use lark_error::WithError;
 use lark_hir as hir;
+use lark_intern::neo::{InternData, Interner};
 use lark_intern::Intern;
-use lark_intern::neo::{Interner, InternData};
 use lark_span::ByteIndex;
 use lark_span::FileName;
 use lark_span::IntoFileName;
@@ -30,7 +30,7 @@ use lark_string::GlobalIdentifierTables;
 use lark_string::Text;
 use lark_ty as ty;
 use lark_ty::declaration::Declaration;
-use lark_ty::declaration::DeclarationTables;
+use lark_ty::TypeInterners;
 use std::sync::Arc;
 
 pub mod current_file;
@@ -47,7 +47,7 @@ pub use self::ir::ParsedFile;
 
 #[salsa::query_group(ParserStorage)]
 pub trait ParserDatabase:
-    AsRef<GlobalIdentifierTables> + Interner<Entity, EntityData> + AsRef<DeclarationTables>
+    AsRef<GlobalIdentifierTables> + Interner<Entity, EntityData> + TypeInterners<Declaration>
 {
     #[salsa::input]
     fn file_names(&self) -> Seq<FileName>;

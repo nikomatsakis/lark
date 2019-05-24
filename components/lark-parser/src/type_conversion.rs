@@ -4,11 +4,10 @@ use lark_entity::{Entity, EntityData, LangItem};
 use lark_error::{ErrorReported, ErrorSentinel, WithError};
 use lark_intern::neo::InternData;
 use lark_intern::neo::InternKey;
-use lark_intern::Intern;
 use lark_ty as ty;
 use lark_ty::declaration::Declaration;
-use lark_ty::declaration::DeclarationTables;
 use lark_ty::TypeFamily;
+use lark_ty::TypeInterners;
 use std::sync::Arc;
 
 crate fn generic_declarations(
@@ -135,16 +134,16 @@ crate fn unit_ty(db: &dyn ParserDatabase) -> ty::Ty<Declaration> {
 }
 
 crate fn declaration_ty_named(
-    db: &dyn AsRef<DeclarationTables>,
+    db: &dyn TypeInterners<Declaration>,
     entity: Entity,
-    perm: impl Intern<DeclarationTables, Key = ty::declaration::Perm>,
+    perm: <Declaration as TypeFamily>::PermData,
     repr: ty::ReprKind,
     generics: ty::Generics<Declaration>,
 ) -> ty::Ty<Declaration> {
     let kind = ty::BaseKind::Named(entity);
     let base = Declaration::intern_base_data(db, ty::BaseData { kind, generics });
     ty::Ty {
-        perm: perm.intern(db),
+        perm: db.intern_perm(perm),
         repr,
         base,
     }

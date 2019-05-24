@@ -47,7 +47,7 @@ crate struct FullInferenceStorage {
 }
 
 impl FullInferenceStorage {
-    crate fn new_inferred_perm(&mut self, tables: &dyn AsRef<FullInferenceTables>) -> Perm {
+    crate fn new_inferred_perm(&mut self, tables: &FullInferenceTables) -> Perm {
         PermData::Inferred(self.perm_vars.push(())).intern(tables)
     }
 

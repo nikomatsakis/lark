@@ -2,13 +2,13 @@ use crate::full_inference::analysis::Node;
 use crate::full_inference::perm::Perm;
 use crate::full_inference::perm::PermData;
 use crate::full_inference::perm::PermVar;
-use crate::full_inference::FullInferenceTables;
 use datafrog::Iteration;
 use datafrog::Relation;
 use lark_collections::FxIndexMap;
 use lark_intern::Intern;
 use lark_intern::Untern;
 use lark_ty::PermKind;
+use lark_ty::TypeInterners;
 
 /// **Kind inference:** The role of *kind inference* is to decide, for
 /// each permission variable `P`, whether it is "share" or "borrow" or
@@ -23,7 +23,7 @@ crate struct KindInference {
 
 impl KindInference {
     crate fn new(
-        tables: &impl AsRef<FullInferenceTables>,
+        tables: &dyn TypeInterners<KindInference>,
         perm_less_base: &[(Perm, Perm, Node)],
         perm_less_if_base: &[(Perm, Perm, Perm, Node)],
     ) -> Self {
@@ -78,7 +78,7 @@ impl KindInference {
     /// then it is shared.
     crate fn to_kind_map(
         &self,
-        tables: &impl AsRef<FullInferenceTables>,
+        tables: &dyn TypeInterners<KindInference>,
     ) -> FxIndexMap<PermVar, PermKind> {
         let mut set: FxIndexMap<PermVar, PermKind> = FxIndexMap::default();
 

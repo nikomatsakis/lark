@@ -3,10 +3,12 @@ use lark_intern::neo::InternKey;
 use lark_intern::Untern;
 use lark_parser::ParserDatabase;
 use lark_ty::declaration::{Declaration, DeclaredPermKind};
-use lark_ty::full_inferred::{FullInferred, FullInferredTables};
-use lark_ty::{BaseData, BaseKind, BoundVarOr, PermKind, Ty, TypeFamily};
+use lark_ty::full_inferred::FullInferred;
+use lark_ty::{
+    BaseData, BaseKind, BoundVarOr, PermKind, Ty, TypeFamily, TypeInterners, TypeLookup,
+};
 
-pub trait PrettyPrintDatabase: ParserDatabase + AsRef<FullInferredTables> {}
+pub trait PrettyPrintDatabase: ParserDatabase + TypeInterners<FullInferred> {}
 
 pub trait PrettyPrint {
     fn pretty_print(&self, db: &(impl PrettyPrintDatabase + ?Sized)) -> String;
@@ -16,10 +18,10 @@ impl PrettyPrint for Ty<Declaration> {
     fn pretty_print(&self, db: &(impl PrettyPrintDatabase + ?Sized)) -> String {
         format!(
             "{}{}",
-            match self.perm.untern(&db) {
+            match self.perm.lookup(&db) {
                 DeclaredPermKind::Own => "",
             },
-            match self.base.untern(&db) {
+            match self.base.lookup(&db) {
                 BoundVarOr::BoundVar(var) => format!("{:?}", var),
                 BoundVarOr::Known(base_data) => base_data.pretty_print(db),
             }
@@ -36,7 +38,7 @@ impl PrettyPrint for Ty<FullInferred> {
                 PermKind::Share => "shared ",
                 PermKind::Borrow => "borrowed ",
             },
-            self.base.untern(&db).pretty_print(db),
+            self.base.lookup(&db).pretty_print(db),
         )
     }
 }
