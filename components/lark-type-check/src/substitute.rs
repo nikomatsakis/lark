@@ -1,7 +1,6 @@
 use lark_intern::Untern;
 use lark_ty::declaration;
 use lark_ty::declaration::Declaration;
-use lark_ty::declaration::DeclarationTables;
 use lark_ty::map_family::FamilyMapper;
 use lark_ty::map_family::Map;
 use lark_ty::BoundVar;
@@ -10,6 +9,7 @@ use lark_ty::Generic;
 use lark_ty::ReprKind;
 use lark_ty::Ty;
 use lark_ty::TypeFamily;
+use lark_ty::TypeInterners;
 
 crate struct Substitution<'me, F, V>
 where
@@ -20,7 +20,7 @@ where
     values: &'me V,
 }
 
-crate trait SubstitutionDelegate<F: TypeFamily>: AsRef<DeclarationTables> {
+crate trait SubstitutionDelegate<F: TypeFamily>: TypeInterners<Declaration> {
     // FIXME(rust-lang/rust#56229) -- can't use `AsRef` supertrait here due to ICE
     fn as_f_tables(&self) -> &F::InternTables;
 
@@ -48,7 +48,7 @@ where
     }
 }
 
-impl<F, V> AsRef<DeclarationTables> for Substitution<'me, F, V>
+impl<F, V> TypeInterners<Declaration> for Substitution<'me, F, V>
 where
     F: TypeFamily,
     V: std::ops::Index<BoundVar, Output = Generic<F>>,

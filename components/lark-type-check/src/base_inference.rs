@@ -40,7 +40,6 @@ mod resolve_to_base_inferred;
 pub struct BaseInference;
 
 impl TypeFamily for BaseInference {
-    type InternTables = BaseInferenceTables;
     type Repr = Erased;
     type Perm = Erased;
     type Base = Base;

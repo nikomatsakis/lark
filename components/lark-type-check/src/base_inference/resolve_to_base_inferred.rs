@@ -2,7 +2,7 @@ use crate::base_inference::{BaseInference, BaseInferenceTables};
 use derive_new::new;
 use lark_hir as hir;
 use lark_intern::Intern;
-use lark_ty::base_inferred::{BaseInferred, BaseInferredTables};
+use lark_ty::base_inferred::BaseInferred;
 use lark_ty::map_family::FamilyMapper;
 use lark_ty::map_family::Map;
 use lark_ty::BaseData;
@@ -10,13 +10,14 @@ use lark_ty::Erased;
 use lark_ty::Placeholder;
 use lark_ty::Ty;
 use lark_ty::TypeFamily;
+use lark_ty::TypeInterners;
 use lark_unify::InferVar;
 use lark_unify::UnificationTable;
 
 #[derive(new)]
 crate struct ResolveToBaseInferred<'me> {
     unify: &'me mut UnificationTable<BaseInferenceTables, hir::MetaIndex>,
-    output_tables: &'me BaseInferredTables,
+    output_tables: &'me dyn TypeInterners<BaseInferred>,
     unresolved: &'me mut Vec<InferVar>,
 }
 

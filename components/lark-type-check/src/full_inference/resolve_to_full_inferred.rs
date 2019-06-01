@@ -9,7 +9,6 @@ use lark_hir as hir;
 use lark_intern::Intern;
 use lark_intern::Untern;
 use lark_ty::full_inferred::FullInferred;
-use lark_ty::full_inferred::FullInferredTables;
 use lark_ty::map_family::FamilyMapper;
 use lark_ty::map_family::Map;
 use lark_ty::BaseData;
@@ -18,6 +17,7 @@ use lark_ty::PermKind;
 use lark_ty::Placeholder;
 use lark_ty::Ty;
 use lark_ty::TypeFamily;
+use lark_ty::TypeInterners;
 use lark_unify::InferVar;
 use lark_unify::UnificationTable;
 
@@ -25,7 +25,7 @@ use lark_unify::UnificationTable;
 crate struct ResolveToFullInferred<'me> {
     unify: &'me mut UnificationTable<FullInferenceTables, hir::MetaIndex>,
     input_tables: &'me FullInferenceTables,
-    output_tables: &'me FullInferredTables,
+    output_tables: &'me dyn TypeInterners<FullInferred>,
     unresolved: &'me mut Vec<InferVar>,
     perm_kinds: &'me FxIndexMap<PermVar, PermKind>,
 }

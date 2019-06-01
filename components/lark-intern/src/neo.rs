@@ -1,3 +1,5 @@
+pub mod table;
+
 pub trait InternKey: Sized {
     type Data: InternData<Key = Self>;
 
@@ -93,4 +95,44 @@ macro_rules! interner_define {
             }
         }
     };
+}
+
+/// Create a struct that implements `Interner` for various types
+#[macro_export]
+macro_rules! interner_struct {
+    ($v:vis struct $n:ident { $($map_name:ident: $map_key:ty => $map_value:ty,)* }) => {
+        $v struct $n {
+            $($map_name: $crate::neo::table::InternTable<$map_key, $map_value>,)*
+        }
+
+        $(
+            impl Interner<$map_key, $map_value> for $n {
+                fn as_dyn(&self) -> &dyn Interner<Key, Key> {
+                    self
+                }
+
+                fn intern(&self, data: Key) -> Key {
+                    self.$map_name.intern(data)
+                }
+
+                fn lookup(&self, key: Key) -> Key {
+                    self.$map_name.lookup(key)
+                }
+            }
+
+            impl<Key> Interner<Key, Key> for $n {
+                fn as_dyn(&self) -> &dyn Interner<Key, Key> {
+                    self
+                }
+
+                fn intern(&self, data: Key) -> Key {
+                    data
+                }
+
+                fn lookup(&self, key: Key) -> Key {
+                    key
+                }
+            }
+        )*
+    }
 }

@@ -63,10 +63,26 @@ pub trait TypeFamily: Copy + Clone + Debug + DebugWith + Eq + Hash + 'static {
     }
 }
 
-pub trait TypeInterners<F: TypeFamily>:
-    Interner<F::Repr, F::ReprData> + Interner<F::Perm, F::PermData> + Interner<F::Base, F::BaseData>
-{
+pub trait AsDynTypeInterners<F: TypeFamily> {
     fn as_dyn(&self) -> &dyn TypeInterners<F>;
+}
+
+pub trait TypeInterners<F: TypeFamily>:
+    Interner<F::Repr, F::ReprData>
+    + Interner<F::Perm, F::PermData>
+    + Interner<F::Base, F::BaseData>
+    + HasTypeInterners<F>
+{
+}
+
+impl<T, F> TypeInterners<F> for T
+where
+    F: TypeFamily,
+    T: Interner<F::Repr, F::ReprData>
+        + Interner<F::Perm, F::PermData>
+        + Interner<F::Base, F::BaseData>
+        + AsDynTypeInterners<F>,
+{
 }
 
 impl<F> dyn TypeInterners<F> + '_

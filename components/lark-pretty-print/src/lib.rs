@@ -6,7 +6,7 @@ use lark_ty::declaration::{Declaration, DeclaredPermKind};
 use lark_ty::full_inferred::FullInferred;
 use lark_ty::{BaseData, BaseKind, BoundVarOr, PermKind, Ty, TypeFamily, TypeInterners};
 
-pub trait PrettyPrintDatabase: ParserDatabase + TypeInterners<FullInferred> {}
+pub trait PrettyPrintDatabase: ParserDatabase + AsDynTypeInterners<FullInferred> {}
 
 pub trait PrettyPrint {
     fn pretty_print(&self, db: &(impl PrettyPrintDatabase + ?Sized)) -> String;

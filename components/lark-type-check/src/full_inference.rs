@@ -39,7 +39,6 @@ crate mod type_checker;
 crate struct FullInference;
 
 impl TypeFamily for FullInference {
-    type InternTables = FullInferenceTables;
     type Repr = Erased;
     type Perm = perm::Perm;
     type Base = Base;
